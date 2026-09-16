@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>გაკვეთილების ცხრილი</title>
+    <title>ცხრილი</title>
 
     <!-- Google Font matching the clean Georgian rounded style -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,28 +19,47 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ცხრილი">
-    <link rel="apple-touch-icon" href="icon.jpg">
+    <link rel="apple-touch-icon" href="icon.png">
 
     <!-- Standard Favicon -->
-    <link rel="icon" type="image/jpeg" href="icon.jpg">
+    <link rel="icon" type="image/png" href="icon.png">
 
-    <!-- Inline Web App Manifest -->
-    <link rel="manifest" href='data:application/manifest+json,{
-        "name": "გაკვეთილების ცხრილი",
-        "short_name": "ცხრილი",
-        "start_url": "./",
-        "display": "standalone",
-        "background_color": "#0a0a0a",
-        "theme_color": "#0a0a0a",
-        "icons": [
-            {
-                "src": "icon.jpg",
-                "sizes": "192x192 512x512",
-                "type": "image/jpeg",
-                "purpose": "any maskable"
-            }
-        ]
-    }'>
+    <!-- Dynamically Inject Valid Manifest with Absolute URLs to pass PWA criteria -->
+    <script>
+        (function() {
+            const baseUrl = window.location.href.split('?')[0];
+            const iconUrl = new URL("icon.png", baseUrl).href;
+            
+            const manifest = {
+                "name": "ცხრილი",
+                "short_name": "ცხრილი",
+                "start_url": baseUrl,
+                "display": "standalone",
+                "background_color": "#0a0a0a",
+                "theme_color": "#0a0a0a",
+                "icons": [
+                    {
+                        "src": iconUrl,
+                        "sizes": "192x192",
+                        "type": "image/png",
+                        "purpose": "any"
+                    },
+                    {
+                        "src": iconUrl,
+                        "sizes": "512x512",
+                        "type": "image/png",
+                        "purpose": "maskable"
+                    }
+                ]
+            };
+            
+            const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = URL.createObjectURL(blob);
+            document.head.appendChild(link);
+        })();
+    </script>
 
     <style>
         * {
@@ -65,7 +84,7 @@
             color: #000000;
         }
 
-        /* Dark mode colors matching the screenshot pitch-black tone */
+        /* Dark mode colors */
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: #0a0a0a;
@@ -84,7 +103,6 @@
             justify-content: center;
         }
 
-        /* Day title matching bold header weight and size */
         h1 {
             font-size: 2.5rem;
             font-weight: 800;
@@ -94,7 +112,6 @@
             letter-spacing: -0.01em;
         }
 
-        /* Subject list spacing & sizing matching screenshot proportions */
         #subjects-list {
             display: flex;
             flex-direction: column;
@@ -247,27 +264,6 @@
 
         updateSchedule();
         setInterval(updateSchedule, 60000);
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                const swCode = `
-                    const CACHE_NAME = 'schedule-v1';
-                    self.addEventListener('install', (e) => {
-                        e.waitUntil(
-                            caches.open(CACHE_NAME).then((cache) => cache.addAll(['./', 'index.html', 'icon.jpg']))
-                        );
-                    });
-                    self.addEventListener('fetch', (e) => {
-                        e.respondWith(
-                            caches.match(e.request).then((res) => res || fetch(e.request))
-                        );
-                    });
-                `;
-                const blob = new Blob([swCode], { type: 'text/javascript' });
-                const swUrl = URL.createObjectURL(blob);
-                navigator.serviceWorker.register(swUrl).catch(() => {});
-            });
-        }
     </script>
 </body>
 </html>
