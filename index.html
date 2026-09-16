@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>გაკვეთილების ცხრილი</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        /* Detect dark mode and invert colors */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #0c0c0c;
+                color: #ffffff;
+            }
+        }
+
+        #schedule-container {
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: bold;
+        }
+
+        .subject {
+            font-size: 2rem;
+            margin: 0.8rem 0;
+        }
+
+        #monday-label {
+            font-size: 1.5rem;
+            font-style: italic;
+            margin-top: 2.5rem;
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="schedule-container">
+        <h1 id="day-title"></h1>
+        <div id="subjects-list"></div>
+        <div id="monday-label">*ორშაბათის ცხრილი</div>
+    </div>
+
+    <script>
+        // Updated schedule mapping matching the timetable grid (Monday to Friday)
+        const schedules = {
+            1: { // Monday (ორშაბათი)
+                dayName: "ორშაბათი",
+                subjects: [
+                    "მათემატიკა",
+                    "მათემატიკა",
+                    "ფიზიკა",
+                    "მუსიკა",
+                    "ქართული",
+                    "გერმანული",
+                    "ინგლისური"
+                ]
+            },
+            2: { // Tuesday (სამშაბათი)
+                dayName: "სამშაბათი",
+                subjects: [
+                    "მათემატიკა",
+                    "მათემატიკა",
+                    "ფიზიკა",
+                    "ქიმია",
+                    "ბიოლოგია",
+                    "ქართული",
+                    "ინგლისური"
+                ]
+            },
+            3: { // Wednesday (ოთხშაბათი)
+                dayName: "ოთხშაბათი",
+                subjects: [
+                    "ფიზიკა",
+                    "ასტრონომია",
+                    "მათემატიკა",
+                    "მათემატიკა",
+                    "ქართული",
+                    "ბიოლოგია",
+                    "სპორტი"
+                ]
+            },
+            4: { // Thursday (ხუთშაბათი)
+                dayName: "ხუთშაბათი",
+                subjects: [
+                    "გეოგრაფია",
+                    "ისტორია",
+                    "ფიზიკა",
+                    "ქართული",
+                    "მათემატიკა",
+                    "ქიმია",
+                    "ინგლისური"
+                ]
+            },
+            5: { // Friday (პარასკევი)
+                dayName: "პარასკევი",
+                subjects: [
+                    "მოქალაქეობა",
+                    "ქართული",
+                    "ფიზიკა",
+                    "მათემატიკა",
+                    "მათემატიკა",
+                    "ისტორია",
+                    "გერმანული"
+                ]
+            },
+            6: { // Saturday (შაბათი) -> Displays Monday schedule
+                dayName: "შაბათი*",
+                subjects: [
+                    "მათემატიკა",
+                    "მათემატიკა",
+                    "ფიზიკა",
+                    "მუსიკა",
+                    "ქართული",
+                    "გერმანული",
+                    "ინგლისური"
+                ]
+            },
+            0: { // Sunday (კვირა) -> Displays Monday schedule
+                dayName: "კვირა*",
+                subjects: [
+                    "მათემატიკა",
+                    "მათემატიკა",
+                    "ფიზიკა",
+                    "მუსიკა",
+                    "ქართული",
+                    "გერმანული",
+                    "ინგლისური"
+                ]
+            }
+        };
+
+        function updateSchedule() {
+            const now = new Date();
+            let currentHour = now.getHours();
+            let currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
+            // If time is 14:00 (2 PM) or later, shift to tomorrow's schedule
+            if (currentHour >= 14) {
+                currentDay = (currentDay + 1) % 7;
+            }
+
+            const targetSchedule = schedules[currentDay];
+
+            // Set Day Title
+            document.getElementById('day-title').textContent = targetSchedule.dayName;
+
+            // Render Subjects
+            const subjectsContainer = document.getElementById('subjects-list');
+            subjectsContainer.innerHTML = '';
+
+            targetSchedule.subjects.forEach(subject => {
+                const div = document.createElement('div');
+                div.className = 'subject';
+                div.textContent = subject;
+                subjectsContainer.appendChild(div);
+            });
+
+            // Display label for Saturday (6) or Sunday (0)
+            const mondayLabel = document.getElementById('monday-label');
+            if (currentDay === 0 || currentDay === 6) {
+                mondayLabel.style.display = 'block';
+            } else {
+                mondayLabel.style.display = 'none';
+            }
+        }
+
+        // Initialize on load
+        updateSchedule();
+
+        // Auto-refresh every minute
+        setInterval(updateSchedule, 60000);
+    </script>
+</body>
+</html>
