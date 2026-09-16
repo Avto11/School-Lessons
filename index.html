@@ -2,12 +2,17 @@
 <html lang="ka">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>გაკვეთილების ცხრილი</title>
+
+    <!-- Google Font matching the clean Georgian rounded style -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;700;800&display=swap" rel="stylesheet">
 
     <!-- PWA & Mobile Settings -->
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#0c0c0c" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
     <meta name="mobile-web-app-capable" content="yes">
     
     <!-- iOS / Safari PWA Settings -->
@@ -19,14 +24,14 @@
     <!-- Standard Favicon -->
     <link rel="icon" type="image/jpeg" href="icon.jpg">
 
-    <!-- Inline Web App Manifest (Satisfies Chrome PWA Install Prompt) -->
+    <!-- Inline Web App Manifest -->
     <link rel="manifest" href='data:application/manifest+json,{
         "name": "გაკვეთილების ცხრილი",
         "short_name": "ცხრილი",
         "start_url": "./",
         "display": "standalone",
-        "background_color": "#0c0c0c",
-        "theme_color": "#0c0c0c",
+        "background_color": "#0a0a0a",
+        "theme_color": "#0a0a0a",
         "icons": [
             {
                 "src": "icon.jpg",
@@ -38,45 +43,78 @@
     }'>
 
     <style>
+        * {
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100vw;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Lock scrolling */
+        }
+
         body {
-            font-family: sans-serif;
+            font-family: 'Noto Sans Georgian', system-ui, -apple-system, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            margin: 0;
             background-color: #ffffff;
             color: #000000;
         }
 
-        /* Detect dark mode and invert colors */
+        /* Dark mode colors matching the screenshot pitch-black tone */
         @media (prefers-color-scheme: dark) {
             body {
-                background-color: #0c0c0c;
+                background-color: #0a0a0a;
                 color: #ffffff;
             }
         }
 
         #schedule-container {
             text-align: center;
+            width: 100%;
+            max-width: 480px;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
+        /* Day title matching bold header weight and size */
         h1 {
             font-size: 2.5rem;
-            margin-bottom: 1.5rem;
-            font-weight: bold;
+            font-weight: 800;
+            margin-top: 0;
+            margin-bottom: 2rem;
+            line-height: 1.1;
+            letter-spacing: -0.01em;
+        }
+
+        /* Subject list spacing & sizing matching screenshot proportions */
+        #subjects-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            width: 100%;
         }
 
         .subject {
-            font-size: 2rem;
-            margin: 0.8rem 0;
+            font-size: 2.25rem;
+            font-weight: 400;
+            line-height: 1.15;
+            letter-spacing: -0.01em;
         }
 
         #monday-label {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-style: italic;
-            margin-top: 2.5rem;
-            display: none; /* Hidden by default */
+            margin-top: 2rem;
+            display: none;
+            opacity: 0.75;
         }
     </style>
 </head>
@@ -89,9 +127,8 @@
     </div>
 
     <script>
-        // Schedule mapping matching the timetable grid
         const schedules = {
-            1: { // Monday (ორშაბათი)
+            1: { // Monday
                 dayName: "ორშაბათი",
                 subjects: [
                     "მათემატიკა",
@@ -103,7 +140,7 @@
                     "ინგლისური"
                 ]
             },
-            2: { // Tuesday (სამშაბათი)
+            2: { // Tuesday
                 dayName: "სამშაბათი",
                 subjects: [
                     "მათემატიკა",
@@ -115,7 +152,7 @@
                     "ინგლისური"
                 ]
             },
-            3: { // Wednesday (ოთხშაბათი)
+            3: { // Wednesday
                 dayName: "ოთხშაბათი",
                 subjects: [
                     "ფიზიკა",
@@ -127,7 +164,7 @@
                     "სპორტი"
                 ]
             },
-            4: { // Thursday (ხუთშაბათი)
+            4: { // Thursday
                 dayName: "ხუთშაბათი",
                 subjects: [
                     "გეოგრაფია",
@@ -139,7 +176,7 @@
                     "ინგლისური"
                 ]
             },
-            5: { // Friday (პარასკევი)
+            5: { // Friday
                 dayName: "პარასკევი",
                 subjects: [
                     "მოქალაქეობა",
@@ -151,7 +188,7 @@
                     "გერმანული"
                 ]
             },
-            6: { // Saturday (შაბათი) -> Displays Monday schedule
+            6: { // Saturday -> Displays Monday schedule
                 dayName: "შაბათი*",
                 subjects: [
                     "მათემატიკა",
@@ -163,7 +200,7 @@
                     "ინგლისური"
                 ]
             },
-            0: { // Sunday (კვირა) -> Displays Monday schedule
+            0: { // Sunday -> Displays Monday schedule
                 dayName: "კვირა*",
                 subjects: [
                     "მათემატიკა",
@@ -180,19 +217,16 @@
         function updateSchedule() {
             const now = new Date();
             let currentHour = now.getHours();
-            let currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+            let currentDay = now.getDay();
 
-            // If time is 14:00 (2 PM) or later, shift to tomorrow's schedule
             if (currentHour >= 14) {
                 currentDay = (currentDay + 1) % 7;
             }
 
             const targetSchedule = schedules[currentDay];
 
-            // Set Day Title
             document.getElementById('day-title').textContent = targetSchedule.dayName;
 
-            // Render Subjects
             const subjectsContainer = document.getElementById('subjects-list');
             subjectsContainer.innerHTML = '';
 
@@ -203,7 +237,6 @@
                 subjectsContainer.appendChild(div);
             });
 
-            // Display label for Saturday (6) or Sunday (0)
             const mondayLabel = document.getElementById('monday-label');
             if (currentDay === 0 || currentDay === 6) {
                 mondayLabel.style.display = 'block';
@@ -212,13 +245,9 @@
             }
         }
 
-        // Initialize on load
         updateSchedule();
-
-        // Auto-refresh every minute
         setInterval(updateSchedule, 60000);
 
-        // Register Service Worker for offline capability & full PWA installability
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
