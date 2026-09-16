@@ -24,7 +24,7 @@
     <!-- Standard Favicon -->
     <link rel="icon" type="image/png" href="icon.png">
 
-    <!-- Dynamically Inject Valid Manifest with Absolute URLs to pass PWA criteria -->
+    <!-- Dynamic Manifest Injection for proper PWA installation -->
     <script>
         (function() {
             const baseUrl = window.location.href.split('?')[0];
@@ -42,13 +42,13 @@
                         "src": iconUrl,
                         "sizes": "192x192",
                         "type": "image/png",
-                        "purpose": "any"
+                        "purpose": "any maskable"
                     },
                     {
                         "src": iconUrl,
                         "sizes": "512x512",
                         "type": "image/png",
-                        "purpose": "maskable"
+                        "purpose": "any maskable"
                     }
                 ]
             };
@@ -264,6 +264,15 @@
 
         updateSchedule();
         setInterval(updateSchedule, 60000);
+
+        // Register Service Worker for offline PWA support
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registered successfully', reg))
+                    .catch(err => console.error('SW registration failed', err));
+            });
+        }
     </script>
 </body>
 </html>
