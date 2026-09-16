@@ -4,6 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>გაკვეთილების ცხრილი</title>
+
+    <!-- PWA & Mobile Settings -->
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0c0c0c" media="(prefers-color-scheme: dark)">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- iOS / Safari PWA Settings -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ცხრილი">
+    <link rel="apple-touch-icon" href="icon.jpg">
+
+    <!-- Standard Favicon -->
+    <link rel="icon" type="image/jpeg" href="icon.jpg">
+
+    <!-- Inline Web App Manifest (Satisfies Chrome PWA Install Prompt) -->
+    <link rel="manifest" href='data:application/manifest+json,{
+        "name": "გაკვეთილების ცხრილი",
+        "short_name": "ცხრილი",
+        "start_url": "./",
+        "display": "standalone",
+        "background_color": "#0c0c0c",
+        "theme_color": "#0c0c0c",
+        "icons": [
+            {
+                "src": "icon.jpg",
+                "sizes": "192x192 512x512",
+                "type": "image/jpeg",
+                "purpose": "any maskable"
+            }
+        ]
+    }'>
+
     <style>
         body {
             font-family: sans-serif;
@@ -56,7 +89,7 @@
     </div>
 
     <script>
-        // Updated schedule mapping matching the timetable grid (Monday to Friday)
+        // Schedule mapping matching the timetable grid
         const schedules = {
             1: { // Monday (ორშაბათი)
                 dayName: "ორშაბათი",
@@ -184,6 +217,28 @@
 
         // Auto-refresh every minute
         setInterval(updateSchedule, 60000);
+
+        // Register Service Worker for offline capability & full PWA installability
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    const CACHE_NAME = 'schedule-v1';
+                    self.addEventListener('install', (e) => {
+                        e.waitUntil(
+                            caches.open(CACHE_NAME).then((cache) => cache.addAll(['./', 'index.html', 'icon.jpg']))
+                        );
+                    });
+                    self.addEventListener('fetch', (e) => {
+                        e.respondWith(
+                            caches.match(e.request).then((res) => res || fetch(e.request))
+                        );
+                    });
+                `;
+                const blob = new Blob([swCode], { type: 'text/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                navigator.serviceWorker.register(swUrl).catch(() => {});
+            });
+        }
     </script>
 </body>
 </html>
