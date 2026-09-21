@@ -1,6 +1,5 @@
-const CACHE_NAME = 'schedule-pwa-v1';
+const CACHE_NAME = 'schedule-pwa-v2';
 
-// Critical assets to cache on installation
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -8,17 +7,24 @@ const STATIC_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;700;800&display=swap'
 ];
 
-// Install Event: Cache core files
+// Install Event: Pre-cache static assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[Service Worker] Pre-caching offline assets');
       return cache.addAll(STATIC_ASSETS);
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
-// Activate Event: Clean up old caches if updated
+// Message Listener: Force update when user clicks update banner
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// Activate Event: Clean up old caches and claim control
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -34,36 +40,24 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event: Cache-First strategy with Network Fallback
+// Fetch Event: Stale-While-Revalidate Strategy
 self.addEventListener('fetch', (event) => {
-  // Ignore non-GET requests
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Return cached version immediately
-        return cachedResponse;
-      }
-
-      // If not in cache, fetch from network and dynamically cache Google Fonts/Resources
-      return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic' && !event.request.url.includes('fonts.')) {
-          return networkResponse;
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
         }
-
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-
         return networkResponse;
-      }).catch(() => {
-        // Fallback to index if main navigation fails offline
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-      });
+      }).catch(() => cachedResponse);
+
+      // Return cached version immediately if available, otherwise wait for network fetch
+      return cachedResponse || fetchPromise;
     })
   );
 });
