@@ -125,7 +125,7 @@
             width: 100%;
         }
 
-        /* Subject row containing time on left, name in center, time on right */
+        /* Subject row with smooth fade in/out time labels */
         .subject-row {
             display: flex;
             align-items: center;
@@ -144,7 +144,7 @@
             font-style: italic;
             opacity: 0;
             width: 75px;
-            transition: opacity 0.25s ease;
+            transition: opacity 0.4s ease, transform 0.4s ease;
             pointer-events: none;
             flex-shrink: 0;
         }
@@ -152,15 +152,18 @@
         .time-label.start {
             text-align: right;
             padding-right: 12px;
+            transform: translateX(8px);
         }
 
         .time-label.end {
             text-align: left;
             padding-left: 12px;
+            transform: translateX(-8px);
         }
 
         .subject-row.active-time .time-label {
             opacity: 0.65;
+            transform: translateX(0);
         }
 
         .subject-name {
@@ -175,12 +178,12 @@
             opacity: 0.75;
         }
 
-        /* Bottom Day Picker Switcher */
+        /* Bottom Day Picker Switcher with Smooth Fade In/Out */
         #day-picker {
             position: fixed;
             bottom: 38px;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%) translateY(10px);
             display: flex;
             gap: 6px;
             background-color: rgba(0, 0, 0, 0.06);
@@ -188,12 +191,13 @@
             border-radius: 16px;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            transition: opacity 0.4s ease, transform 0.4s ease;
             z-index: 10;
         }
 
         #day-picker.visible {
             opacity: 1;
+            transform: translateX(-50%) translateY(0);
             pointer-events: auto;
         }
 
@@ -346,7 +350,8 @@
         ];
 
         let selectedDayIndex = null;
-        let activeTimer = null;
+        let timeLabelTimer = null;
+        let dayPickerTimer = null;
 
         function getAutoDayIndex() {
             const now = new Date();
@@ -358,25 +363,49 @@
             return currentDay;
         }
 
+        function hideDayPicker() {
+            const picker = document.getElementById('day-picker');
+            picker.classList.remove('visible');
+            if (dayPickerTimer) {
+                clearTimeout(dayPickerTimer);
+                dayPickerTimer = null;
+            }
+        }
+
         function toggleDayPicker() {
             const picker = document.getElementById('day-picker');
-            picker.classList.toggle('visible');
+            const isVisible = picker.classList.contains('visible');
+
+            if (isVisible) {
+                hideDayPicker();
+            } else {
+                picker.classList.add('visible');
+                resetDayPickerTimer();
+            }
+        }
+
+        function resetDayPickerTimer() {
+            if (dayPickerTimer) clearTimeout(dayPickerTimer);
+            dayPickerTimer = setTimeout(() => {
+                hideDayPicker();
+            }, 5000);
         }
 
         function selectDay(dayIdx) {
             selectedDayIndex = dayIdx;
             updateSchedule();
+            resetDayPickerTimer();
         }
 
         function showSubjectTime(element) {
-            if (activeTimer) clearTimeout(activeTimer);
+            if (timeLabelTimer) clearTimeout(timeLabelTimer);
 
             const allRows = document.querySelectorAll('.subject-row');
             allRows.forEach(row => row.classList.remove('active-time'));
 
             element.classList.add('active-time');
 
-            activeTimer = setTimeout(() => {
+            timeLabelTimer = setTimeout(() => {
                 element.classList.remove('active-time');
             }, 5000);
         }
