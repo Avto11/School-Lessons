@@ -65,6 +65,7 @@
         * {
             box-sizing: border-box;
             touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         html, body {
@@ -91,48 +92,18 @@
             }
         }
 
-        /* Update Notification Banner */
-        #update-toast {
-            position: fixed;
-            top: 16px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-100px);
-            background-color: #000000;
-            color: #ffffff;
-            padding: 10px 18px;
-            border-radius: 20px;
-            font-size: 0.95rem;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 9999;
-            cursor: pointer;
-        }
-
-        #update-toast.visible {
-            transform: translateX(-50%) translateY(0);
-        }
-
-        @media (prefers-color-scheme: dark) {
-            #update-toast {
-                background-color: #ffffff;
-                color: #000000;
-            }
-        }
-
         #schedule-container {
             text-align: center;
             width: 100%;
             max-width: 480px;
-            padding: 2rem 1rem 4rem 1rem;
+            padding: 2rem 1rem 5rem 1rem;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
         }
 
+        /* Clickable Title with Underline */
         h1 {
             font-size: 2.5rem;
             font-weight: 800;
@@ -140,6 +111,11 @@
             margin-bottom: 2rem;
             line-height: 1.1;
             letter-spacing: -0.01em;
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 6px;
+            text-decoration-thickness: 2px;
+            user-select: none;
         }
 
         #subjects-list {
@@ -149,11 +125,46 @@
             width: 100%;
         }
 
-        .subject {
+        /* Subject row containing time on left, name in center, time on right */
+        .subject-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 2.25rem;
             font-weight: 400;
             line-height: 1.15;
             letter-spacing: -0.01em;
+            cursor: pointer;
+            user-select: none;
+            width: 100%;
+        }
+
+        .time-label {
+            font-size: 1.25rem;
+            font-style: italic;
+            opacity: 0;
+            width: 75px;
+            transition: opacity 0.25s ease;
+            pointer-events: none;
+            flex-shrink: 0;
+        }
+
+        .time-label.start {
+            text-align: right;
+            padding-right: 12px;
+        }
+
+        .time-label.end {
+            text-align: left;
+            padding-left: 12px;
+        }
+
+        .subject-row.active-time .time-label {
+            opacity: 0.65;
+        }
+
+        .subject-name {
+            text-align: center;
         }
 
         #monday-label {
@@ -164,10 +175,62 @@
             opacity: 0.75;
         }
 
-        /* Subtle Bottom Segmented Progress Bar */
+        /* Bottom Day Picker Switcher */
+        #day-picker {
+            position: fixed;
+            bottom: 38px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            background-color: rgba(0, 0, 0, 0.06);
+            padding: 4px;
+            border-radius: 16px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 10;
+        }
+
+        #day-picker.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .day-btn {
+            background: none;
+            border: none;
+            color: inherit;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: opacity 0.2s, background-color 0.2s;
+        }
+
+        .day-btn.active {
+            opacity: 1;
+            background-color: #ffffff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            #day-picker {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+            .day-btn.active {
+                background-color: #222222;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            }
+        }
+
+        /* Bottom Segmented Progress Bar */
         #progress-bar-container {
             position: fixed;
-            bottom: 24px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             width: calc(100% - 48px);
@@ -212,16 +275,21 @@
 </head>
 <body>
 
-    <!-- Dynamic Update Banner -->
-    <div id="update-toast" onclick="applyUpdate()">
-        <span>ახალი ვერსია მზადაა</span>
-        <strong style="text-decoration: underline;">განახლება</strong>
-    </div>
-
     <div id="schedule-container">
-        <h1 id="day-title"></h1>
+        <h1 id="day-title" onclick="toggleDayPicker()"></h1>
         <div id="subjects-list"></div>
         <div id="monday-label">*ორშაბათის ცხრილი</div>
+    </div>
+
+    <!-- Hidden Day Picker Switcher -->
+    <div id="day-picker">
+        <button class="day-btn" onclick="selectDay(1)">ორ</button>
+        <button class="day-btn" onclick="selectDay(2)">სა</button>
+        <button class="day-btn" onclick="selectDay(3)">ოთ</button>
+        <button class="day-btn" onclick="selectDay(4)">ხუ</button>
+        <button class="day-btn" onclick="selectDay(5)">პა</button>
+        <button class="day-btn" onclick="selectDay(6)">შა</button>
+        <button class="day-btn" onclick="selectDay(0)">კვ</button>
     </div>
 
     <!-- Segmented Progress Bar -->
@@ -237,126 +305,107 @@
 
     <script>
         const schedules = {
-            1: { // Monday
+            1: {
                 dayName: "ორშაბათი",
-                subjects: [
-                    "მათემატიკა",
-                    "მათემატიკა",
-                    "ფიზიკა",
-                    "მუსიკა",
-                    "ქართული",
-                    "გერმანული",
-                    "ინგლისური"
-                ]
+                subjects: ["მათემატიკა", "მათემატიკა", "ფიზიკა", "მუსიკა", "ქართული", "გერმანული", "ინგლისური"]
             },
-            2: { // Tuesday
+            2: {
                 dayName: "სამშაბათი",
-                subjects: [
-                    "მათემატიკა",
-                    "მათემატიკა",
-                    "ფიზიკა",
-                    "ქართული",
-                    "ქიმია",
-                    "ბიოლოგია",
-                    "ინგლისური"
-                ]
+                subjects: ["მათემატიკა", "მათემატიკა", "ფიზიკა", "ქართული", "ქიმია", "ბიოლოგია", "ინგლისური"]
             },
-            3: { // Wednesday
+            3: {
                 dayName: "ოთხშაბათი",
-                subjects: [
-                    "ფიზიკა",
-                    "ისტორია",
-                    "მათემატიკა",
-                    "მათემატიკა",
-                    "ქართული",
-                    "ბიოლოგია",
-                    "სპორტი"
-                ]
+                subjects: ["ფიზიკა", "ისტორია", "მათემატიკა", "მათემატიკა", "ქართული", "ბიოლოგია", "სპორტი"]
             },
-            4: { // Thursday
+            4: {
                 dayName: "ხუთშაბათი",
-                subjects: [
-                    "გეოგრაფია",
-                    "ქართული",
-                    "ფიზიკა",
-                    "მათემატიკა",
-                    "მოქალაქეობა",
-                    "ქიმია",
-                    "ინგლისური"
-                ]
+                subjects: ["გეოგრაფია", "ქართული", "ფიზიკა", "მათემატიკა", "მოქალაქეობა", "ქიმია", "ინგლისური"]
             },
-            5: { // Friday
+            5: {
                 dayName: "პარასკევი",
-                subjects: [
-                    "ფიზიკა",
-                    "ქართული",
-                    "მათემატიკა",
-                    "მათემატიკა",
-                    "ისტორია",
-                    "ასტრონომია",
-                    "გერმანული"
-                ]
+                subjects: ["ფიზიკა", "ქართული", "მათემატიკა", "მათემატიკა", "ისტორია", "ასტრონომია", "გერმანული"]
             },
-            6: { // Saturday -> Displays Monday schedule
+            6: {
                 dayName: "შაბათი*",
-                subjects: [
-                    "მათემატიკა",
-                    "მათემატიკა",
-                    "ფიზიკა",
-                    "მუსიკა",
-                    "ქართული",
-                    "გერმანული",
-                    "ინგლისური"
-                ]
+                subjects: ["მათემატიკა", "მათემატიკა", "ფიზიკა", "მუსიკა", "ქართული", "გერმანული", "ინგლისური"]
             },
-            0: { // Sunday -> Displays Monday schedule
+            0: {
                 dayName: "კვირა*",
-                subjects: [
-                    "მათემატიკა",
-                    "მათემატიკა",
-                    "ფიზიკა",
-                    "მუსიკა",
-                    "ქართული",
-                    "გერმანული",
-                    "ინგლისური"
-                ]
+                subjects: ["მათემატიკა", "მათემატიკა", "ფიზიკა", "მუსიკა", "ქართული", "გერმანული", "ინგლისური"]
             }
         };
 
-        // Lesson start/end times in minutes from midnight
         const lessonTimes = [
-            { start: 8 * 60 + 30, end: 9 * 60 + 10 },  // 8:30 - 9:10
-            { start: 9 * 60 + 15, end: 9 * 60 + 55 },  // 9:15 - 9:55
-            { start: 10 * 60 + 0,  end: 10 * 60 + 40 }, // 10:00 - 10:40
-            { start: 10 * 60 + 50, end: 11 * 60 + 30 }, // 10:50 - 11:30
-            { start: 11 * 60 + 35, end: 12 * 60 + 15 }, // 11:35 - 12:15
-            { start: 12 * 60 + 20, end: 13 * 60 + 0 },  // 12:20 - 13:00
-            { start: 13 * 60 + 5,  end: 13 * 60 + 45 }  // 13:05 - 13:45
+            { start: "08:30", end: "09:10", startMin: 8 * 60 + 30, endMin: 9 * 60 + 10 },
+            { start: "09:15", end: "09:55", startMin: 9 * 60 + 15, endMin: 9 * 60 + 55 },
+            { start: "10:00", end: "10:40", startMin: 10 * 60 + 0,  endMin: 10 * 60 + 40 },
+            { start: "10:50", end: "11:30", startMin: 10 * 60 + 50, endMin: 11 * 60 + 30 },
+            { start: "11:35", end: "12:15", startMin: 11 * 60 + 35, endMin: 12 * 60 + 15 },
+            { start: "12:20", end: "13:00", startMin: 12 * 60 + 20, endMin: 13 * 60 + 0 },
+            { start: "13:05", end: "13:45", startMin: 13 * 60 + 5,  endMin: 13 * 60 + 45 }
         ];
 
+        let selectedDayIndex = null;
+        let activeTimer = null;
+
+        function getAutoDayIndex() {
+            const now = new Date();
+            let currentHour = now.getHours();
+            let currentDay = now.getDay();
+            if (currentHour >= 14) {
+                currentDay = (currentDay + 1) % 7;
+            }
+            return currentDay;
+        }
+
+        function toggleDayPicker() {
+            const picker = document.getElementById('day-picker');
+            picker.classList.toggle('visible');
+        }
+
+        function selectDay(dayIdx) {
+            selectedDayIndex = dayIdx;
+            updateSchedule();
+        }
+
+        function showSubjectTime(element) {
+            if (activeTimer) clearTimeout(activeTimer);
+
+            const allRows = document.querySelectorAll('.subject-row');
+            allRows.forEach(row => row.classList.remove('active-time'));
+
+            element.classList.add('active-time');
+
+            activeTimer = setTimeout(() => {
+                element.classList.remove('active-time');
+            }, 5000);
+        }
+
         function updateProgressBar(now) {
+            const autoDay = getAutoDayIndex();
+            const viewingDay = selectedDayIndex !== null ? selectedDayIndex : autoDay;
             const currentDay = now.getDay();
             const isWeekday = currentDay >= 1 && currentDay <= 5;
             const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-            const schoolStart = 8 * 60 + 30; // 8:30 AM
-            const schoolEnd = 13 * 60 + 45;  // 1:45 PM
+            const schoolStart = 8 * 60 + 30;
+            const schoolEnd = 13 * 60 + 45;
 
             const progressBarContainer = document.getElementById('progress-bar-container');
 
-            if (isWeekday && currentMinutes >= schoolStart && currentMinutes <= schoolEnd) {
+            if (viewingDay === currentDay && isWeekday && currentMinutes >= schoolStart && currentMinutes <= schoolEnd) {
                 progressBarContainer.classList.add('visible');
 
                 lessonTimes.forEach((lesson, index) => {
                     const fillElement = document.getElementById(`fill-${index}`);
                     
-                    if (currentMinutes >= lesson.end) {
+                    if (currentMinutes >= lesson.endMin) {
                         fillElement.style.width = '100%';
-                    } else if (currentMinutes < lesson.start) {
+                    } else if (currentMinutes < lesson.startMin) {
                         fillElement.style.width = '0%';
                     } else {
-                        const lessonDuration = lesson.end - lesson.start;
-                        const elapsed = currentMinutes - lesson.start;
+                        const lessonDuration = lesson.endMin - lesson.startMin;
+                        const elapsed = currentMinutes - lesson.startMin;
                         const percentage = Math.min(100, Math.max(0, (elapsed / lessonDuration) * 100));
                         fillElement.style.width = `${percentage}%`;
                     }
@@ -368,33 +417,42 @@
 
         function updateSchedule() {
             const now = new Date();
-            let currentHour = now.getHours();
-            let currentDay = now.getDay();
-
-            if (currentHour >= 14) {
-                currentDay = (currentDay + 1) % 7;
-            }
-
-            const targetSchedule = schedules[currentDay];
+            const activeDayIdx = selectedDayIndex !== null ? selectedDayIndex : getAutoDayIndex();
+            const targetSchedule = schedules[activeDayIdx];
 
             document.getElementById('day-title').textContent = targetSchedule.dayName;
 
             const subjectsContainer = document.getElementById('subjects-list');
             subjectsContainer.innerHTML = '';
 
-            targetSchedule.subjects.forEach(subject => {
-                const div = document.createElement('div');
-                div.className = 'subject';
-                div.textContent = subject;
-                subjectsContainer.appendChild(div);
+            targetSchedule.subjects.forEach((subject, idx) => {
+                const row = document.createElement('div');
+                row.className = 'subject-row';
+                row.onclick = () => showSubjectTime(row);
+
+                const time = lessonTimes[idx] || { start: '', end: '' };
+
+                row.innerHTML = `
+                    <span class="time-label start">${time.start}</span>
+                    <span class="subject-name">${subject}</span>
+                    <span class="time-label end">${time.end}</span>
+                `;
+                subjectsContainer.appendChild(row);
             });
 
             const mondayLabel = document.getElementById('monday-label');
-            if (currentDay === 0 || currentDay === 6) {
-                mondayLabel.style.display = 'block';
-            } else {
-                mondayLabel.style.display = 'none';
-            }
+            mondayLabel.style.display = (activeDayIdx === 0 || activeDayIdx === 6) ? 'block' : 'none';
+
+            // Highlight Active Button in Day Picker
+            const buttons = document.querySelectorAll('.day-btn');
+            buttons.forEach((btn, idx) => {
+                const dayValue = [1, 2, 3, 4, 5, 6, 0][idx];
+                if (dayValue === activeDayIdx) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
 
             updateProgressBar(now);
         }
@@ -402,27 +460,19 @@
         updateSchedule();
         setInterval(updateSchedule, 10000);
 
-        // Service Worker Lifecycle Handling
-        let newWorker;
-
-        function applyUpdate() {
-            if (newWorker) {
-                newWorker.postMessage({ type: 'SKIP_WAITING' });
-            }
-        }
-
+        // Silent Service Worker Registration & Auto-Update
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js').then(reg => {
                     reg.addEventListener('updatefound', () => {
-                        newWorker = reg.installing;
+                        const newWorker = reg.installing;
                         newWorker.addEventListener('statechange', () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                document.getElementById('update-toast').classList.add('visible');
+                                newWorker.postMessage({ type: 'SKIP_WAITING' });
                             }
                         });
                     });
-                }).catch(err => console.error('SW registration failed:', err));
+                });
 
                 let refreshing = false;
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
