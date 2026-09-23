@@ -202,23 +202,39 @@
         }
 
         .day-btn {
+            position: relative;
             background: none;
             border: none;
             color: inherit;
             font-family: inherit;
             font-size: 0.95rem;
             font-weight: 700;
-            padding: 6px 12px;
+            padding: 6px 14px;
             border-radius: 12px;
             cursor: pointer;
             opacity: 0.5;
             transition: opacity 0.2s, background-color 0.2s;
         }
 
+        /* Highlight currently viewing day */
         .day-btn.active {
             opacity: 1;
             background-color: #ffffff;
             box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+
+        /* Highlight actual current real-world day */
+        .day-btn.is-today::after {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background-color: currentColor;
+            border-radius: 50%;
+            opacity: 0.8;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -285,15 +301,13 @@
         <div id="monday-label">*ორშაბათის ცხრილი</div>
     </div>
 
-    <!-- Hidden Day Picker Switcher -->
+    <!-- Day Picker Switcher (Mon-Fri only) -->
     <div id="day-picker">
         <button class="day-btn" onclick="selectDay(1)">ორ</button>
         <button class="day-btn" onclick="selectDay(2)">სა</button>
         <button class="day-btn" onclick="selectDay(3)">ოთ</button>
         <button class="day-btn" onclick="selectDay(4)">ხუ</button>
         <button class="day-btn" onclick="selectDay(5)">პა</button>
-        <button class="day-btn" onclick="selectDay(6)">შა</button>
-        <button class="day-btn" onclick="selectDay(0)">კვ</button>
     </div>
 
     <!-- Segmented Progress Bar -->
@@ -448,6 +462,7 @@
             const now = new Date();
             const activeDayIdx = selectedDayIndex !== null ? selectedDayIndex : getAutoDayIndex();
             const targetSchedule = schedules[activeDayIdx];
+            const realTodayDay = now.getDay();
 
             document.getElementById('day-title').textContent = targetSchedule.dayName;
 
@@ -472,14 +487,25 @@
             const mondayLabel = document.getElementById('monday-label');
             mondayLabel.style.display = (activeDayIdx === 0 || activeDayIdx === 6) ? 'block' : 'none';
 
-            // Highlight Active Button in Day Picker
+            // Highlight Active View & Today Indicator in Day Picker (Mon=1 ... Fri=5)
             const buttons = document.querySelectorAll('.day-btn');
+            const dayValues = [1, 2, 3, 4, 5];
+
             buttons.forEach((btn, idx) => {
-                const dayValue = [1, 2, 3, 4, 5, 6, 0][idx];
-                if (dayValue === activeDayIdx) {
+                const dayVal = dayValues[idx];
+                
+                // Highlight viewed day
+                if (dayVal === activeDayIdx) {
                     btn.classList.add('active');
                 } else {
                     btn.classList.remove('active');
+                }
+
+                // Highlight real-world current day
+                if (dayVal === realTodayDay) {
+                    btn.classList.add('is-today');
+                } else {
+                    btn.classList.remove('is-today');
                 }
             });
 
@@ -489,18 +515,30 @@
         updateSchedule();
         setInterval(updateSchedule, 10000);
 
-        // Silent Service Worker Registration & Auto-Update
+        // Auto-Update Engine
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js').then(reg => {
+                    // Check for updates on load
+                    reg.update();
+
                     reg.addEventListener('updatefound', () => {
                         const newWorker = reg.installing;
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                newWorker.postMessage({ type: 'SKIP_WAITING' });
-                            }
-                        });
+                        if (newWorker) {
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                }
+                            });
+                        }
                     });
+                });
+
+                // Force update check when returning to app
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        navigator.serviceWorker.ready.then(reg => reg.update());
+                    }
                 });
 
                 let refreshing = false;
