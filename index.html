@@ -99,7 +99,7 @@
             text-align: center;
             width: 100%;
             max-width: 480px;
-            padding: 2rem 1rem 5rem 1rem;
+            padding: 2rem 1rem;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -175,7 +175,7 @@
             transition: opacity 0.3s ease;
         }
 
-        /* Red Strikethrough Style */
+        /* Vibrant Red Strikethrough */
         .subject-row.crossed .subject-name {
             opacity: 0.45;
         }
@@ -186,8 +186,9 @@
             left: -4px;
             right: -4px;
             top: 52%;
-            height: 3px;
-            background-color: #ff3b30;
+            height: 3.5px;
+            background-color: #ff2d55;
+            box-shadow: 0 0 6px rgba(255, 45, 85, 0.6);
             border-radius: 2px;
         }
 
@@ -468,10 +469,8 @@
             return currentDay;
         }
 
-        // 6:00 AM Daily Reset Storage Logic
         function getStorageKey() {
             const now = new Date();
-            // If current time is before 6:00 AM, treat it as belonging to yesterday's cycle
             if (now.getHours() < 6) {
                 now.setDate(now.getDate() - 1);
             }
@@ -530,11 +529,22 @@
 
         function shareSchedule() {
             const container = document.getElementById('schedule-container');
+            const picker = document.getElementById('day-picker');
+            const wasPickerVisible = picker.classList.contains('visible');
+
+            // Hide day picker temporarily so it doesn't get captured in screenshot
+            if (wasPickerVisible) {
+                picker.classList.remove('visible');
+            }
+
             if (typeof html2canvas !== 'undefined') {
                 html2canvas(container, {
                     scale: 2,
                     backgroundColor: getComputedStyle(document.body).backgroundColor
                 }).then(canvas => {
+                    if (wasPickerVisible) {
+                        picker.classList.add('visible');
+                    }
                     canvas.toBlob(blob => {
                         const file = new File([blob], 'schedule.png', { type: 'image/png' });
                         if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -560,6 +570,7 @@
                 clearTimeout(dayPickerTimer);
                 dayPickerTimer = null;
             }
+            updateActionButtonsVisibility();
         }
 
         function toggleDayPicker() {
@@ -572,6 +583,7 @@
                 picker.classList.add('visible');
                 resetDayPickerTimer();
             }
+            updateActionButtonsVisibility();
         }
 
         function resetDayPickerTimer() {
@@ -634,6 +646,24 @@
             }
         }
 
+        function updateActionButtonsVisibility() {
+            const isDefaultDay = isCurrentDefaultDay();
+            const crossedSubjects = isDefaultDay ? getCrossedSubjects() : [];
+            const hasCrossedItems = isDefaultDay && crossedSubjects.length > 0;
+            const isPickerVisible = document.getElementById('day-picker').classList.contains('visible');
+
+            const shareBtn = document.getElementById('share-btn');
+            const clearBtn = document.getElementById('clear-btn');
+
+            if (hasCrossedItems && !isPickerVisible) {
+                shareBtn.classList.add('visible');
+                clearBtn.classList.add('visible');
+            } else {
+                shareBtn.classList.remove('visible');
+                clearBtn.classList.remove('visible');
+            }
+        }
+
         function updateSchedule() {
             const now = new Date();
             const activeDayIdx = selectedDayIndex !== null ? selectedDayIndex : getAutoDayIndex();
@@ -668,7 +698,6 @@
             const mondayLabel = document.getElementById('monday-label');
             mondayLabel.style.display = (activeDayIdx === 0 || activeDayIdx === 6) ? 'block' : 'none';
 
-            // Highlight Active View & Today Indicator in Day Picker
             const buttons = document.querySelectorAll('.day-btn');
             const dayValues = [1, 2, 3, 4, 5];
 
@@ -688,19 +717,7 @@
                 }
             });
 
-            // Toggle Action Buttons Visibility
-            const hasCrossedItems = isDefaultDay && crossedSubjects.length > 0;
-            const shareBtn = document.getElementById('share-btn');
-            const clearBtn = document.getElementById('clear-btn');
-
-            if (hasCrossedItems) {
-                shareBtn.classList.add('visible');
-                clearBtn.classList.add('visible');
-            } else {
-                shareBtn.classList.remove('visible');
-                clearBtn.classList.remove('visible');
-            }
-
+            updateActionButtonsVisibility();
             updateProgressBar(now);
         }
 
