@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v4';
+const CACHE_NAME = 'schedule-pwa-v12';
 
 const STATIC_ASSETS = [
   './',
@@ -7,7 +7,6 @@ const STATIC_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;700;800&display=swap'
 ];
 
-// Force immediate installation and activation
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
@@ -35,7 +34,6 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Stale-While-Revalidate Strategy for Instant Auto-Updates
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
