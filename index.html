@@ -175,7 +175,7 @@
             transition: opacity 0.3s ease;
         }
 
-        /* Vibrant Red Strikethrough */
+        /* Pure Red Strikethrough with subtle opacity and barely noticeable glow */
         .subject-row.crossed .subject-name {
             opacity: 0.45;
         }
@@ -186,9 +186,9 @@
             left: -4px;
             right: -4px;
             top: 52%;
-            height: 3.5px;
-            background-color: #ff2d55;
-            box-shadow: 0 0 6px rgba(255, 45, 85, 0.6);
+            height: 3px;
+            background-color: rgba(255, 0, 0, 0.85);
+            box-shadow: 0 0 4px rgba(255, 0, 0, 0.3);
             border-radius: 2px;
         }
 
@@ -532,7 +532,6 @@
             const picker = document.getElementById('day-picker');
             const wasPickerVisible = picker.classList.contains('visible');
 
-            // Hide day picker temporarily so it doesn't get captured in screenshot
             if (wasPickerVisible) {
                 picker.classList.remove('visible');
             }
