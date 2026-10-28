@@ -103,7 +103,7 @@
             justify-content: center;
         }
 
-        /* Clickable Title with Underline */
+        /* Clickable Title with Underline matching the reference */
         h1 {
             font-size: 2.5rem;
             font-weight: 800;
@@ -112,9 +112,8 @@
             line-height: 1.1;
             letter-spacing: -0.01em;
             cursor: pointer;
-            text-decoration: underline;
-            text-underline-offset: 6px;
-            text-decoration-thickness: 2px;
+            border-bottom: 3px solid currentColor;
+            padding-bottom: 6px;
             user-select: none;
         }
 
@@ -545,10 +544,36 @@
                     picker.classList.remove('visible');
                 }
 
-                html2canvas(container, {
+                // Create a clean temporary wrapper matching the exact reference card look & aspect ratio
+                const exportWrapper = document.createElement('div');
+                exportWrapper.style.position = 'fixed';
+                exportWrapper.style.left = '-9999px';
+                exportWrapper.style.top = '0';
+                exportWrapper.style.width = '540px';
+                exportWrapper.style.height = '720px'; // Clean portrait aspect ratio
+                exportWrapper.style.backgroundColor = getComputedStyle(document.body).backgroundColor;
+                exportWrapper.style.color = getComputedStyle(document.body).color;
+                exportWrapper.style.display = 'flex';
+                exportWrapper.style.flexDirection = 'column';
+                exportWrapper.style.justifyContent = 'center';
+                exportWrapper.style.alignItems = 'center';
+                exportWrapper.style.fontFamily = getComputedStyle(document.body).fontFamily;
+                exportWrapper.style.padding = '40px 20px';
+
+                const clonedContainer = container.cloneNode(true);
+                // Ensure no time labels are active in the screenshot
+                clonedContainer.querySelectorAll('.subject-row').forEach(row => {
+                    row.classList.remove('active-time');
+                });
+
+                exportWrapper.appendChild(clonedContainer);
+                document.body.appendChild(exportWrapper);
+
+                html2canvas(exportWrapper, {
                     scale: 2,
                     backgroundColor: getComputedStyle(document.body).backgroundColor
                 }).then(canvas => {
+                    document.body.removeChild(exportWrapper);
                     if (wasPickerVisible) {
                         picker.classList.add('visible');
                     }
