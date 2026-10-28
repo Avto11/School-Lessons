@@ -1,11 +1,10 @@
-const CACHE_NAME = 'schedule-pwa-v9';
+const CACHE_NAME = 'schedule-pwa-v10';
 
 const STATIC_ASSETS = [
   './',
   './index.html',
   './icon.png',
-  'https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;700;800&display=swap',
-  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
+  'https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;700;800&display=swap'
 ];
 
 self.addEventListener('install', (event) => {
