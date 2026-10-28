@@ -144,7 +144,7 @@
             font-style: italic;
             opacity: 0;
             width: 75px;
-            transition: opacity 0.4s ease, transform 0.4s ease;
+            transition: opacity 0.3s ease, transform 0.3s ease;
             pointer-events: none;
             flex-shrink: 0;
         }
@@ -210,7 +210,7 @@
             border-radius: 16px;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.4s ease, transform 0.4s ease;
+            transition: opacity 0.3s ease, transform 0.3s ease;
             z-index: 10;
         }
 
@@ -544,13 +544,13 @@
                     picker.classList.remove('visible');
                 }
 
-                // Render in a tightly proportioned 9:16 layout frame with large clear text sizing
+                // Render in a clean 9:16 story frame with larger text and tight framing
                 const wrapper = document.createElement('div');
                 wrapper.style.position = 'fixed';
                 wrapper.style.top = '-9999px';
                 wrapper.style.left = '-9999px';
-                wrapper.style.width = '720px';
-                wrapper.style.height = '1280px';
+                wrapper.style.width = '480px';
+                wrapper.style.height = '854px';
                 wrapper.style.backgroundColor = getComputedStyle(document.body).backgroundColor;
                 wrapper.style.color = getComputedStyle(document.body).color;
                 wrapper.style.fontFamily = getComputedStyle(document.body).fontFamily;
@@ -564,11 +564,18 @@
                 clone.style.width = '100%';
                 clone.style.maxWidth = 'none';
                 clone.style.padding = '0';
+
+                // Enlarge text elements inside the shared layout for a prominent story appearance
+                clone.querySelector('h1').style.fontSize = '3rem';
+                clone.querySelectorAll('.subject-row').forEach(row => {
+                    row.style.fontSize = '2.75rem';
+                });
+
                 wrapper.appendChild(clone);
                 document.body.appendChild(wrapper);
 
                 html2canvas(wrapper, {
-                    scale: 3.5,
+                    scale: 3,
                     backgroundColor: getComputedStyle(document.body).backgroundColor
                 }).then(canvas => {
                     document.body.removeChild(wrapper);
