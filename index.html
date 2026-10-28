@@ -175,7 +175,7 @@
             transition: opacity 0.3s ease;
         }
 
-        /* Red Strikethrough: Reduced opacity with enhanced vibrant glow */
+        /* Soft opacity with vibrant neon pop strikethrough */
         .subject-row.crossed .subject-name {
             opacity: 0.45;
         }
@@ -187,8 +187,8 @@
             right: -4px;
             top: 52%;
             height: 3px;
-            background-color: rgba(255, 0, 0, 0.65);
-            box-shadow: 0 0 8px rgba(255, 0, 50, 0.8);
+            background-color: rgba(255, 0, 50, 0.65);
+            box-shadow: 0 0 8px rgba(255, 0, 50, 0.45);
             border-radius: 2px;
         }
 
@@ -439,4 +439,323 @@
                 subjects: ["მათემატიკა", "მათემატიკა", "ფიზიკა", "მუსიკა", "ქართული", "გერმანული", "ინგლისური"]
             },
             0: {
-                dayName: "კვი
+                dayName: "კვირა*",
+                subjects: ["მათემატიკა", "მათემატიკა", "ფიზიკა", "მუსიკა", "ქართული", "გერმანული", "ინგლისური"]
+            }
+        };
+
+        const lessonTimes = [
+            { start: "08:30", end: "09:10", startMin: 8 * 60 + 30, endMin: 9 * 60 + 10 },
+            { start: "09:15", end: "09:55", startMin: 9 * 60 + 15, endMin: 9 * 60 + 55 },
+            { start: "10:00", end: "10:40", startMin: 10 * 60 + 0,  endMin: 10 * 60 + 40 },
+            { start: "10:50", end: "11:30", startMin: 10 * 60 + 50, endMin: 11 * 60 + 30 },
+            { start: "11:35", end: "12:15", startMin: 11 * 60 + 35, endMin: 12 * 60 + 15 },
+            { start: "12:20", end: "13:00", startMin: 12 * 60 + 20, endMin: 13 * 60 + 0 },
+            { start: "13:05", end: "13:45", startMin: 13 * 60 + 5,  endMin: 13 * 60 + 45 }
+        ];
+
+        let selectedDayIndex = null;
+        let timeLabelTimer = null;
+        let dayPickerTimer = null;
+        let clickTimer = null;
+
+        function getAutoDayIndex() {
+            const now = new Date();
+            let currentHour = now.getHours();
+            let currentDay = now.getDay();
+            if (currentHour >= 14) {
+                currentDay = (currentDay + 1) % 7;
+            }
+            return currentDay;
+        }
+
+        function getStorageKey() {
+            const now = new Date();
+            if (now.getHours() < 6) {
+                now.setDate(now.getDate() - 1);
+            }
+            const dateStr = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
+            return `crossed_subjects_${dateStr}`;
+        }
+
+        function getCrossedSubjects() {
+            const key = getStorageKey();
+            try {
+                return JSON.parse(localStorage.getItem(key)) || [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveCrossedSubjects(list) {
+            const key = getStorageKey();
+            localStorage.setItem(key, JSON.stringify(list));
+        }
+
+        function isCurrentDefaultDay() {
+            return selectedDayIndex === null || selectedDayIndex === getAutoDayIndex();
+        }
+
+        function handleSubjectClick(element, subjectName) {
+            if (clickTimer == null) {
+                clickTimer = setTimeout(() => {
+                    clickTimer = null;
+                    showSubjectTime(element);
+                }, 250);
+            } else {
+                clearTimeout(clickTimer);
+                clickTimer = null;
+                if (isCurrentDefaultDay()) {
+                    toggleSubjectCross(subjectName);
+                }
+            }
+        }
+
+        function toggleSubjectCross(subjectName) {
+            let crossed = getCrossedSubjects();
+            if (crossed.includes(subjectName)) {
+                crossed = crossed.filter(item => item !== subjectName);
+            } else {
+                crossed.push(subjectName);
+            }
+            saveCrossedSubjects(crossed);
+            updateSchedule();
+        }
+
+        function clearCrossedSubjects() {
+            saveCrossedSubjects([]);
+            updateSchedule();
+        }
+
+        function shareSchedule() {
+            const container = document.getElementById('schedule-container');
+            const picker = document.getElementById('day-picker');
+            const wasPickerVisible = picker.classList.contains('visible');
+
+            if (wasPickerVisible) {
+                picker.classList.remove('visible');
+            }
+
+            if (typeof html2canvas !== 'undefined') {
+                html2canvas(container, {
+                    scale: 2,
+                    backgroundColor: getComputedStyle(document.body).backgroundColor
+                }).then(canvas => {
+                    if (wasPickerVisible) {
+                        picker.classList.add('visible');
+                    }
+                    canvas.toBlob(blob => {
+                        const file = new File([blob], 'schedule.png', { type: 'image/png' });
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            navigator.share({
+                                title: 'ცხრილი',
+                                files: [file]
+                            }).catch(() => {});
+                        } else {
+                            const link = document.createElement('a');
+                            link.download = 'schedule.png';
+                            link.href = canvas.toDataURL();
+                            link.click();
+                        }
+                    });
+                });
+            }
+        }
+
+        function hideDayPicker() {
+            const picker = document.getElementById('day-picker');
+            picker.classList.remove('visible');
+            if (dayPickerTimer) {
+                clearTimeout(dayPickerTimer);
+                dayPickerTimer = null;
+            }
+            updateActionButtonsVisibility();
+        }
+
+        function toggleDayPicker() {
+            const picker = document.getElementById('day-picker');
+            const isVisible = picker.classList.contains('visible');
+
+            if (isVisible) {
+                hideDayPicker();
+            } else {
+                picker.classList.add('visible');
+                resetDayPickerTimer();
+            }
+            updateActionButtonsVisibility();
+        }
+
+        function resetDayPickerTimer() {
+            if (dayPickerTimer) clearTimeout(dayPickerTimer);
+            dayPickerTimer = setTimeout(() => {
+                hideDayPicker();
+            }, 5000);
+        }
+
+        function selectDay(dayIdx) {
+            selectedDayIndex = dayIdx;
+            updateSchedule();
+            resetDayPickerTimer();
+        }
+
+        function showSubjectTime(element) {
+            if (timeLabelTimer) clearTimeout(timeLabelTimer);
+
+            const allRows = document.querySelectorAll('.subject-row');
+            allRows.forEach(row => row.classList.remove('active-time'));
+
+            element.classList.add('active-time');
+
+            timeLabelTimer = setTimeout(() => {
+                element.classList.remove('active-time');
+            }, 5000);
+        }
+
+        function updateProgressBar(now) {
+            const autoDay = getAutoDayIndex();
+            const viewingDay = selectedDayIndex !== null ? selectedDayIndex : autoDay;
+            const currentDay = now.getDay();
+            const isWeekday = currentDay >= 1 && currentDay <= 5;
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+            const schoolStart = 8 * 60 + 30;
+            const schoolEnd = 13 * 60 + 45;
+
+            const progressBarContainer = document.getElementById('progress-bar-container');
+
+            if (viewingDay === currentDay && isWeekday && currentMinutes >= schoolStart && currentMinutes <= schoolEnd) {
+                progressBarContainer.classList.add('visible');
+
+                lessonTimes.forEach((lesson, index) => {
+                    const fillElement = document.getElementById(`fill-${index}`);
+                    
+                    if (currentMinutes >= lesson.endMin) {
+                        fillElement.style.width = '100%';
+                    } else if (currentMinutes < lesson.startMin) {
+                        fillElement.style.width = '0%';
+                    } else {
+                        const lessonDuration = lesson.endMin - lesson.startMin;
+                        const elapsed = currentMinutes - lesson.startMin;
+                        const percentage = Math.min(100, Math.max(0, (elapsed / lessonDuration) * 100));
+                        fillElement.style.width = `${percentage}%`;
+                    }
+                });
+            } else {
+                progressBarContainer.classList.remove('visible');
+            }
+        }
+
+        function updateActionButtonsVisibility() {
+            const isDefaultDay = isCurrentDefaultDay();
+            const crossedSubjects = isDefaultDay ? getCrossedSubjects() : [];
+            const hasCrossedItems = isDefaultDay && crossedSubjects.length > 0;
+            const isPickerVisible = document.getElementById('day-picker').classList.contains('visible');
+
+            const shareBtn = document.getElementById('share-btn');
+            const clearBtn = document.getElementById('clear-btn');
+
+            if (hasCrossedItems && !isPickerVisible) {
+                shareBtn.classList.add('visible');
+                clearBtn.classList.add('visible');
+            } else {
+                shareBtn.classList.remove('visible');
+                clearBtn.classList.remove('visible');
+            }
+        }
+
+        function updateSchedule() {
+            const now = new Date();
+            const activeDayIdx = selectedDayIndex !== null ? selectedDayIndex : getAutoDayIndex();
+            const targetSchedule = schedules[activeDayIdx];
+            const realTodayDay = now.getDay();
+
+            document.getElementById('day-title').textContent = targetSchedule.dayName;
+
+            const subjectsContainer = document.getElementById('subjects-list');
+            subjectsContainer.innerHTML = '';
+
+            const isDefaultDay = isCurrentDefaultDay();
+            const crossedSubjects = isDefaultDay ? getCrossedSubjects() : [];
+
+            targetSchedule.subjects.forEach((subject, idx) => {
+                const row = document.createElement('div');
+                const isCrossed = crossedSubjects.includes(subject);
+
+                row.className = `subject-row ${isCrossed ? 'crossed' : ''}`;
+                row.onclick = () => handleSubjectClick(row, subject);
+
+                const time = lessonTimes[idx] || { start: '', end: '' };
+
+                row.innerHTML = `
+                    <span class="time-label start">${time.start}</span>
+                    <span class="subject-name">${subject}</span>
+                    <span class="time-label end">${time.end}</span>
+                `;
+                subjectsContainer.appendChild(row);
+            });
+
+            const mondayLabel = document.getElementById('monday-label');
+            mondayLabel.style.display = (activeDayIdx === 0 || activeDayIdx === 6) ? 'block' : 'none';
+
+            const buttons = document.querySelectorAll('.day-btn');
+            const dayValues = [1, 2, 3, 4, 5];
+
+            buttons.forEach((btn, idx) => {
+                const dayVal = dayValues[idx];
+                
+                if (dayVal === activeDayIdx) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+
+                if (dayVal === realTodayDay) {
+                    btn.classList.add('is-today');
+                } else {
+                    btn.classList.remove('is-today');
+                }
+            });
+
+            updateActionButtonsVisibility();
+            updateProgressBar(now);
+        }
+
+        updateSchedule();
+        setInterval(updateSchedule, 10000);
+
+        // Auto-Update Engine
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+                    reg.update();
+
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        if (newWorker) {
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                }
+                            });
+                        }
+                    });
+                });
+
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        navigator.serviceWorker.ready.then(reg => reg.update());
+                    }
+                });
+
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (!refreshing) {
+                        refreshing = true;
+                        window.location.reload();
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
