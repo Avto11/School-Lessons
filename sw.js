@@ -1,13 +1,13 @@
-const CACHE_NAME = 'schedule-pwa-v4';
+const CACHE_NAME = 'schedule-pwa-v5';
 
 const STATIC_ASSETS = [
   './',
   './index.html',
   './icon.png',
-  'https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;700;800&display=swap'
+  'https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;700;800&display=swap',
+  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
 ];
 
-// Force immediate installation and activation
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
@@ -35,7 +35,6 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Stale-While-Revalidate Strategy for Instant Auto-Updates
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
