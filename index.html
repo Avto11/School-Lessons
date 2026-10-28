@@ -10,6 +10,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;700;800&display=swap" rel="stylesheet">
 
+    <!-- Canvas library for Share feature -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <!-- PWA & Mobile Settings -->
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
@@ -168,6 +171,24 @@
 
         .subject-name {
             text-align: center;
+            position: relative;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Red Strikethrough Style */
+        .subject-row.crossed .subject-name {
+            opacity: 0.45;
+        }
+
+        .subject-row.crossed .subject-name::after {
+            content: '';
+            position: absolute;
+            left: -4px;
+            right: -4px;
+            top: 52%;
+            height: 3px;
+            background-color: #ff3b30;
+            border-radius: 2px;
         }
 
         #monday-label {
@@ -178,7 +199,7 @@
             opacity: 0.75;
         }
 
-        /* Bottom Day Picker Switcher with Smooth Fade In/Out */
+        /* Bottom Day Picker Switcher */
         #day-picker {
             position: fixed;
             bottom: 38px;
@@ -216,14 +237,12 @@
             transition: opacity 0.2s, background-color 0.2s;
         }
 
-        /* Highlight currently viewing day */
         .day-btn.active {
             opacity: 1;
             background-color: #ffffff;
             box-shadow: 0 2px 8px rgba(0,0,0,0.12);
         }
 
-        /* Highlight actual current real-world day */
         .day-btn.is-today::after {
             content: '';
             position: absolute;
@@ -291,6 +310,61 @@
                 background-color: rgba(255, 255, 255, 0.75);
             }
         }
+
+        /* Circular 1:1 Action Buttons */
+        .circle-action-btn {
+            position: fixed;
+            bottom: 28px;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.08);
+            color: currentColor;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.2s ease, background-color 0.2s ease;
+            z-index: 20;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .circle-action-btn.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .circle-action-btn:active {
+            transform: scale(0.92);
+        }
+
+        #share-btn {
+            left: 20px;
+        }
+
+        #clear-btn {
+            right: 20px;
+        }
+
+        .circle-action-btn svg {
+            width: 22px;
+            height: 22px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .circle-action-btn {
+                background-color: rgba(255, 255, 255, 0.12);
+                box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+            }
+        }
     </style>
 </head>
 <body>
@@ -301,14 +375,30 @@
         <div id="monday-label">*ორშაბათის ცხრილი</div>
     </div>
 
-    <!-- Day Picker Switcher (Mon-Fri only) -->
+    <!-- Day Picker Switcher (Mon-Fri) -->
     <div id="day-picker">
-        <button class="day-btn" onclick="selectDay(1)">ორშ</button>
-        <button class="day-btn" onclick="selectDay(2)">სამ</button>
-        <button class="day-btn" onclick="selectDay(3)">ოთხ</button>
-        <button class="day-btn" onclick="selectDay(4)">ხუთ</button>
-        <button class="day-btn" onclick="selectDay(5)">პარ</button>
+        <button class="day-btn" onclick="selectDay(1)">ორ</button>
+        <button class="day-btn" onclick="selectDay(2)">სა</button>
+        <button class="day-btn" onclick="selectDay(3)">ოთ</button>
+        <button class="day-btn" onclick="selectDay(4)">ხუ</button>
+        <button class="day-btn" onclick="selectDay(5)">პა</button>
     </div>
+
+    <!-- Bottom Action Buttons -->
+    <button id="share-btn" class="circle-action-btn" onclick="shareSchedule()" aria-label="გაზიარება">
+        <svg viewBox="0 0 24 24">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+            <polyline points="16 6 12 2 8 6"></polyline>
+            <line x1="12" y1="2" x2="12" y2="15"></line>
+        </svg>
+    </button>
+
+    <button id="clear-btn" class="circle-action-btn" onclick="clearCrossedSubjects()" aria-label="წაშლა">
+        <svg viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+    </button>
 
     <!-- Segmented Progress Bar -->
     <div id="progress-bar-container">
@@ -366,6 +456,7 @@
         let selectedDayIndex = null;
         let timeLabelTimer = null;
         let dayPickerTimer = null;
+        let clickTimer = null;
 
         function getAutoDayIndex() {
             const now = new Date();
@@ -375,6 +466,91 @@
                 currentDay = (currentDay + 1) % 7;
             }
             return currentDay;
+        }
+
+        // 6:00 AM Daily Reset Storage Logic
+        function getStorageKey() {
+            const now = new Date();
+            // If current time is before 6:00 AM, treat it as belonging to yesterday's cycle
+            if (now.getHours() < 6) {
+                now.setDate(now.getDate() - 1);
+            }
+            const dateStr = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
+            return `crossed_subjects_${dateStr}`;
+        }
+
+        function getCrossedSubjects() {
+            const key = getStorageKey();
+            try {
+                return JSON.parse(localStorage.getItem(key)) || [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveCrossedSubjects(list) {
+            const key = getStorageKey();
+            localStorage.setItem(key, JSON.stringify(list));
+        }
+
+        function isCurrentDefaultDay() {
+            return selectedDayIndex === null || selectedDayIndex === getAutoDayIndex();
+        }
+
+        function handleSubjectClick(element, subjectName) {
+            if (clickTimer == null) {
+                clickTimer = setTimeout(() => {
+                    clickTimer = null;
+                    showSubjectTime(element);
+                }, 250);
+            } else {
+                clearTimeout(clickTimer);
+                clickTimer = null;
+                if (isCurrentDefaultDay()) {
+                    toggleSubjectCross(subjectName);
+                }
+            }
+        }
+
+        function toggleSubjectCross(subjectName) {
+            let crossed = getCrossedSubjects();
+            if (crossed.includes(subjectName)) {
+                crossed = crossed.filter(item => item !== subjectName);
+            } else {
+                crossed.push(subjectName);
+            }
+            saveCrossedSubjects(crossed);
+            updateSchedule();
+        }
+
+        function clearCrossedSubjects() {
+            saveCrossedSubjects([]);
+            updateSchedule();
+        }
+
+        function shareSchedule() {
+            const container = document.getElementById('schedule-container');
+            if (typeof html2canvas !== 'undefined') {
+                html2canvas(container, {
+                    scale: 2,
+                    backgroundColor: getComputedStyle(document.body).backgroundColor
+                }).then(canvas => {
+                    canvas.toBlob(blob => {
+                        const file = new File([blob], 'schedule.png', { type: 'image/png' });
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            navigator.share({
+                                title: 'ცხრილი',
+                                files: [file]
+                            }).catch(() => {});
+                        } else {
+                            const link = document.createElement('a');
+                            link.download = 'schedule.png';
+                            link.href = canvas.toDataURL();
+                            link.click();
+                        }
+                    });
+                });
+            }
         }
 
         function hideDayPicker() {
@@ -469,10 +645,15 @@
             const subjectsContainer = document.getElementById('subjects-list');
             subjectsContainer.innerHTML = '';
 
+            const isDefaultDay = isCurrentDefaultDay();
+            const crossedSubjects = isDefaultDay ? getCrossedSubjects() : [];
+
             targetSchedule.subjects.forEach((subject, idx) => {
                 const row = document.createElement('div');
-                row.className = 'subject-row';
-                row.onclick = () => showSubjectTime(row);
+                const isCrossed = crossedSubjects.includes(subject);
+
+                row.className = `subject-row ${isCrossed ? 'crossed' : ''}`;
+                row.onclick = () => handleSubjectClick(row, subject);
 
                 const time = lessonTimes[idx] || { start: '', end: '' };
 
@@ -487,27 +668,38 @@
             const mondayLabel = document.getElementById('monday-label');
             mondayLabel.style.display = (activeDayIdx === 0 || activeDayIdx === 6) ? 'block' : 'none';
 
-            // Highlight Active View & Today Indicator in Day Picker (Mon=1 ... Fri=5)
+            // Highlight Active View & Today Indicator in Day Picker
             const buttons = document.querySelectorAll('.day-btn');
             const dayValues = [1, 2, 3, 4, 5];
 
             buttons.forEach((btn, idx) => {
                 const dayVal = dayValues[idx];
                 
-                // Highlight viewed day
                 if (dayVal === activeDayIdx) {
                     btn.classList.add('active');
                 } else {
                     btn.classList.remove('active');
                 }
 
-                // Highlight real-world current day
                 if (dayVal === realTodayDay) {
                     btn.classList.add('is-today');
                 } else {
                     btn.classList.remove('is-today');
                 }
             });
+
+            // Toggle Action Buttons Visibility
+            const hasCrossedItems = isDefaultDay && crossedSubjects.length > 0;
+            const shareBtn = document.getElementById('share-btn');
+            const clearBtn = document.getElementById('clear-btn');
+
+            if (hasCrossedItems) {
+                shareBtn.classList.add('visible');
+                clearBtn.classList.add('visible');
+            } else {
+                shareBtn.classList.remove('visible');
+                clearBtn.classList.remove('visible');
+            }
 
             updateProgressBar(now);
         }
@@ -519,7 +711,6 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js').then(reg => {
-                    // Check for updates on load
                     reg.update();
 
                     reg.addEventListener('updatefound', () => {
@@ -534,7 +725,6 @@
                     });
                 });
 
-                // Force update check when returning to app
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible') {
                         navigator.serviceWorker.ready.then(reg => reg.update());
