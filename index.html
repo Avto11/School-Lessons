@@ -172,7 +172,7 @@
             transition: opacity 0.3s ease;
         }
 
-        /* Pure Red Strikethrough */
+        /* Strikethrough Default (Red) */
         .subject-row.crossed .subject-name {
             opacity: 0.45;
         }
@@ -187,6 +187,12 @@
             background-color: rgba(255, 0, 0, 0.95);
             box-shadow: 0 0 5px rgba(255, 0, 0, 0.4);
             border-radius: 2px;
+        }
+
+        /* Strikethrough All-Complete (Green) */
+        .subject-row.crossed.all-done .subject-name::after {
+            background-color: rgba(52, 199, 89, 0.95);
+            box-shadow: 0 0 6px rgba(52, 199, 89, 0.5);
         }
 
         #monday-label {
@@ -544,20 +550,20 @@
                     picker.classList.remove('visible');
                 }
 
-                // Render in a clean 9:16 story frame with larger text and tight framing
+                // Render in a clean 9:16 story frame with maximized text size and almost zero padding
                 const wrapper = document.createElement('div');
                 wrapper.style.position = 'fixed';
                 wrapper.style.top = '-9999px';
                 wrapper.style.left = '-9999px';
-                wrapper.style.width = '480px';
-                wrapper.style.height = '854px';
+                wrapper.style.width = '360px';
+                wrapper.style.height = '640px';
                 wrapper.style.backgroundColor = getComputedStyle(document.body).backgroundColor;
                 wrapper.style.color = getComputedStyle(document.body).color;
                 wrapper.style.fontFamily = getComputedStyle(document.body).fontFamily;
                 wrapper.style.display = 'flex';
                 wrapper.style.justifyContent = 'center';
                 wrapper.style.alignItems = 'center';
-                wrapper.style.padding = '10px';
+                wrapper.style.padding = '0px';
                 wrapper.style.boxSizing = 'border-box';
 
                 const clone = document.getElementById('schedule-container').cloneNode(true);
@@ -565,17 +571,18 @@
                 clone.style.maxWidth = 'none';
                 clone.style.padding = '0';
 
-                // Enlarge text elements inside the shared layout for a prominent story appearance
-                clone.querySelector('h1').style.fontSize = '3rem';
+                // Drastically upscale fonts for maximum impact inside the story screenshot
+                clone.querySelector('h1').style.fontSize = '3.5rem';
+                clone.querySelector('h1').style.marginBottom = '1.5rem';
                 clone.querySelectorAll('.subject-row').forEach(row => {
-                    row.style.fontSize = '2.75rem';
+                    row.style.fontSize = '3.25rem';
                 });
 
                 wrapper.appendChild(clone);
                 document.body.appendChild(wrapper);
 
                 html2canvas(wrapper, {
-                    scale: 3,
+                    scale: 5,
                     backgroundColor: getComputedStyle(document.body).backgroundColor
                 }).then(canvas => {
                     document.body.removeChild(wrapper);
@@ -715,11 +722,23 @@
             const isDefaultDay = isCurrentDefaultDay();
             const crossedSubjects = isDefaultDay ? getCrossedSubjects() : [];
 
+            // Check if every unique lesson required for the day has been crossed off
+            const uniqueDaySubjects = [...new Set(targetSchedule.subjects)];
+            const allCrossedForDay = uniqueDaySubjects.length > 0 && uniqueDaySubjects.every(sub => crossedSubjects.includes(sub));
+
             targetSchedule.subjects.forEach((subject, idx) => {
                 const row = document.createElement('div');
                 const isCrossed = crossedSubjects.includes(subject);
 
-                row.className = `subject-row ${isCrossed ? 'crossed' : ''}`;
+                let rowClass = 'subject-row';
+                if (isCrossed) {
+                    rowClass += ' crossed';
+                    if (allCrossedForDay) {
+                        rowClass += ' all-done';
+                    }
+                }
+
+                row.className = rowClass;
                 row.onclick = () => handleSubjectClick(row, subject);
 
                 const time = lessonTimes[idx] || { start: '', end: '' };
