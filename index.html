@@ -537,7 +537,6 @@
 
         function shareSchedule() {
             loadHtml2Canvas(() => {
-                const container = document.getElementById('schedule-container');
                 const picker = document.getElementById('day-picker');
                 const wasPickerVisible = picker.classList.contains('visible');
 
@@ -545,20 +544,34 @@
                     picker.classList.remove('visible');
                 }
 
-                // Force 9:16 aspect ratio wrapping matching container dimensions with minimal padding
-                const origWidth = container.offsetWidth;
-                const targetHeight = Math.round(origWidth * (16 / 9));
+                // Create an off-screen 9:16 container wrapper for pristine story layout sharing
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'fixed';
+                wrapper.style.top = '-9999px';
+                wrapper.style.left = '-9999px';
+                wrapper.style.width = '1080px';
+                wrapper.style.height = '1920px';
+                wrapper.style.backgroundColor = getComputedStyle(document.body).backgroundColor;
+                wrapper.style.color = getComputedStyle(document.body).color;
+                wrapper.style.fontFamily = getComputedStyle(document.body).fontFamily;
+                wrapper.style.display = 'flex';
+                wrapper.style.justifyContent = 'center';
+                wrapper.style.alignItems = 'center';
+                wrapper.style.padding = '40px';
+                wrapper.style.boxSizing = 'border-box';
 
-                html2canvas(container, {
+                const clone = document.getElementById('schedule-container').cloneNode(true);
+                clone.style.width = '100%';
+                clone.style.maxWidth = 'none';
+                clone.style.padding = '0';
+                wrapper.appendChild(clone);
+                document.body.appendChild(wrapper);
+
+                html2canvas(wrapper, {
                     scale: 2,
-                    width: origWidth,
-                    height: targetHeight,
-                    windowWidth: origWidth,
-                    windowHeight: targetHeight,
-                    x: 0,
-                    y: Math.round((targetHeight - container.offsetHeight) / 2),
                     backgroundColor: getComputedStyle(document.body).backgroundColor
                 }).then(canvas => {
+                    document.body.removeChild(wrapper);
                     if (wasPickerVisible) {
                         picker.classList.add('visible');
                     }
