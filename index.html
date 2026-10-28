@@ -74,6 +74,8 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
+            /* Force GPU acceleration to eliminate startup stutter */
+            -webkit-font-smoothing: antialiased;
         }
 
         body {
@@ -83,6 +85,12 @@
             align-items: center;
             background-color: #ffffff;
             color: #000000;
+            opacity: 0;
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
         }
 
         @media (prefers-color-scheme: dark) {
@@ -101,6 +109,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            transform: translateZ(0); /* Hardware acceleration layer */
         }
 
         /* Clickable Title with Underline */
@@ -137,6 +146,7 @@
             cursor: pointer;
             user-select: none;
             width: 100%;
+            will-change: opacity;
         }
 
         .time-label {
@@ -144,7 +154,7 @@
             font-style: italic;
             opacity: 0;
             width: 75px;
-            transition: opacity 0.4s ease, transform 0.4s ease;
+            transition: opacity 0.3s ease, transform 0.3s ease;
             pointer-events: none;
             flex-shrink: 0;
         }
@@ -152,13 +162,13 @@
         .time-label.start {
             text-align: right;
             padding-right: 12px;
-            transform: translateX(8px);
+            transform: translateX(6px);
         }
 
         .time-label.end {
             text-align: left;
             padding-left: 12px;
-            transform: translateX(-8px);
+            transform: translateX(-6px);
         }
 
         .subject-row.active-time .time-label {
@@ -210,8 +220,9 @@
             border-radius: 16px;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.4s ease, transform 0.4s ease;
+            transition: opacity 0.3s ease, transform 0.3s ease;
             z-index: 10;
+            will-change: transform, opacity;
         }
 
         #day-picker.visible {
@@ -328,6 +339,7 @@
             transition: opacity 0.3s ease, transform 0.2s ease, background-color 0.2s ease;
             z-index: 20;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            will-change: opacity, transform;
         }
 
         .circle-action-btn.visible {
@@ -524,7 +536,6 @@
             updateSchedule();
         }
 
-        // Lazy-load html2canvas only when the user clicks share
         function loadHtml2Canvas(callback) {
             if (typeof html2canvas !== 'undefined') {
                 callback();
