@@ -175,7 +175,7 @@
             transition: opacity 0.3s ease;
         }
 
-        /* Pure Red Strikethrough - adjusted to pop a bit more */
+        /* Pure Red Strikethrough */
         .subject-row.crossed .subject-name {
             opacity: 0.45;
         }
@@ -231,7 +231,7 @@
             font-family: inherit;
             font-size: 0.95rem;
             font-weight: 700;
-            padding: 6px 14px;
+            padding: 6px 12px;
             border-radius: 12px;
             cursor: pointer;
             opacity: 0.5;
@@ -342,11 +342,11 @@
             transform: scale(0.92);
         }
 
-        #share-btn {
+        #clear-btn {
             left: 20px;
         }
 
-        #clear-btn {
+        #share-btn {
             right: 20px;
         }
 
@@ -376,7 +376,7 @@
         <div id="monday-label">*ორშაბათის ცხრილი</div>
     </div>
 
-    <!-- Day Picker Switcher (Mon-Fri) -->
+    <!-- Day Picker Switcher (Mon-Fri) with 3-letter abbreviations -->
     <div id="day-picker">
         <button class="day-btn" onclick="selectDay(1)">ორშ</button>
         <button class="day-btn" onclick="selectDay(2)">სამ</button>
@@ -385,19 +385,19 @@
         <button class="day-btn" onclick="selectDay(5)">პარ</button>
     </div>
 
-    <!-- Bottom Action Buttons -->
+    <!-- Bottom Action Buttons (Swapped Positions & Reset Icon) -->
+    <button id="clear-btn" class="circle-action-btn" onclick="clearCrossedSubjects()" aria-label="გასუფთავება">
+        <svg viewBox="0 0 24 24">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+        </svg>
+    </button>
+
     <button id="share-btn" class="circle-action-btn" onclick="shareSchedule()" aria-label="გაზიარება">
         <svg viewBox="0 0 24 24">
             <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
             <polyline points="16 6 12 2 8 6"></polyline>
             <line x1="12" y1="2" x2="12" y2="15"></line>
-        </svg>
-    </button>
-
-    <button id="clear-btn" class="circle-action-btn" onclick="clearCrossedSubjects()" aria-label="წაშლა">
-        <svg viewBox="0 0 24 24">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
         </svg>
     </button>
 
